@@ -20,13 +20,11 @@ class SayedCog(commands.Cog):
     async def countdown(self, interaction: discord.Interaction, seconds: int):
         if seconds < 1 or seconds > 30:
             await interaction.response.send_message(
-                "Please provide a number between 1 and 30 seconds.",
-                ephemeral=True,
+                "Please provide a number between 1 and 30 seconds."
             )
             return
         await interaction.response.send_message(
-            f"Counting down from {seconds} seconds...",
-            ephemeral=True,
+            f"Counting down from {seconds} seconds..."
         )
         
         for i in range(seconds, 0, -1):
