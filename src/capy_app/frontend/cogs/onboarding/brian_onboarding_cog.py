@@ -26,7 +26,7 @@ class todoCog(commands.Cog):
         embed = discord.Embed(
             title = f"{interaction.user.name}'s Todo List",
             description = description_dynamic,
-            color = colors.TODO,
+            color = colors.PING,
         )
         await interaction.response.send_message(embed=embed)
         message = await interaction.original_response()
@@ -37,20 +37,22 @@ class todoCog(commands.Cog):
         await message.add_reaction("➕")
         await message.add_reaction("❌")
         await message.add_reaction("✅")
-
+        self.bot.og_user_id = user_id  # Store the original user ID for later checks
+    
     @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
+    async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User):
         # Ignore bot reactions
         if user.bot:
             return  
 
         # Check if the reaction is on a tracked message
         message = reaction.message
-        if message not in self.tracked_messages:
+        message_id = message.id
+        if message_id not in self.message_tracker.values():
             return
         
-        user_id = self.tracked_messages[message.id]
-        if user.id != user_id:
+        user_id = user.id
+        if user.id != self.bot.og_user_id:
             await message.channel.send(f"{user.mention}, you can only manage your own todo list.", delete_after=5)
             return
 
@@ -60,7 +62,8 @@ class todoCog(commands.Cog):
             await self.remove_task(reaction.message, user)
         elif reaction.emoji == "✅":
             await self.close_task_list(reaction.message, user)
-
+        else: 
+            message.send(f"{user.mention}, unknown reaction.", delete_after=5)
     async def add_task(self, message, user):
         await message.channel.send(f"{user.mention}, what task would you like to add?", delete_after=10)
 
@@ -70,6 +73,7 @@ class todoCog(commands.Cog):
         try:
             reply = await self.bot.wait_for("message", check=check, timeout=30.0)
             task = reply.content.strip()
+            await reply.delete()
             if task:
                 self.todolists.setdefault(user.id, []).append(task)
                 await self.update_embed(message, user.id)
