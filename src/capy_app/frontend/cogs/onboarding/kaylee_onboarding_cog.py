@@ -15,28 +15,32 @@ class KayleeCog(commands.Cog):
         )
 
     @app_commands.guilds(discord.Object(id=settings.DEBUG_GUILD_ID))
-    @app_commands.command(name="poll", description="Shows the bot's latency")
-    async def poll(self, interaction: discord.Interaction, question: str, choice1: str, choice2: str, choice3: str = None):
-        choices = [choice1, choice2]
-        if choice3:
-            choices.append(choice3)
+    @app_commands.command(name="poll", description="Custom poll with 3 choices")
+    async def poll(self, interaction: discord.Interaction, question: str, choice_1: str, choice_2: str, choice_3: str):
+        choices = [choice_1, choice_2, choice_3]
         emojis = ["1️⃣", "2️⃣", "3️⃣"]
         
+        #description string creation
+        descriptions = []
+        for i in range(3):
+            descrip = emojis[i] + " " + choices[i]
+            descriptions.append(descrip)
+        message = "\n".join(descriptions)           #combine all into one string
+
         
-        descriptions = []                           #to describe each choice
-        for i, choice in enumerate(choices):        #enumerate gives index & choice text while looping through choices
-            descrip = f"{emojis[i]} {choice}"       #combine emoji (number) + choice 
-            descriptions.append(descrip)            #add line to descriptions
-        
-        
-        message = f"⏱ {round(self.bot.latency * 1000)} ms Latency!"
+        #description embed
         embed = discord.Embed(
-            title="Poll",
-            description=message,
-            color=colors.POLL,  #renamed PING to POLL ... idk if i was supposed to do this
+            title = "Poll: " + question,
+            description = message,
+            #color = colors.POLL,       #couldn't get it to work :( gave me errors
         )
-        self.logger.info(message)
-        await interaction.response.send_message(embed=embed)
+        self.logger.info(message)                               #logs message
+        await interaction.response.send_message(embed=embed)    #replies to command with the embed
+
+        #adding emoji reactions for voting
+        msg = await interaction.original_response()     #get the reply message
+        for i in range(3):
+            await msg.add_reaction(emojis[i])           #reacts to that msg with each emoji
 
 
 async def setup(bot: commands.Bot):
