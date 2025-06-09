@@ -6,6 +6,7 @@ from discord import app_commands
 
 from frontend import config_colors as colors
 from config import settings
+import random
 
 
 
@@ -37,6 +38,47 @@ class SayedCog(commands.Cog):
             await interaction.edit_original_response(content="Time's up!")
         except discord.HTTPException as e:
             self.logger.error(f"Failed to edit final response: {e}")
+    
+    async def arithmetic_game(self, interaction: discord.Interaction):
+        # You can implement the game logic here
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, 10)
+        operation = random.choice(["+", "-", "*", "/"])
+
+        challenge = f"What is {num1} {operation} {num2}?"
+        await interaction.followup.send(challenge)
+        
+        if operation == '+':
+            correct_answer = num1 + num2
+        elif operation == '-':
+            correct_answer = num1 - num2
+        elif operation == '*':
+            correct_answer = num1 * num2
+        elif operation == '/':
+            correct_answer = num1 / num2
+        else:
+            raise ValueError(f"Unsupported operation: {operation}")
+
+        def check(m):
+            return m.author == interaction.user and m.channel == interaction.channel
+
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
+        except asyncio.TimeoutError:
+            await interaction.followup.send("Timed out! You took too long to answer.")
+            return
+
+        try:
+            user_answer = float(msg.content)
+        except ValueError:
+            await interaction.followup.send("Invalid answer. Please enter a numeric value.")
+            return
+
+        if abs(user_answer - correct_answer) < 0.001:
+            await interaction.followup.send("Correct!")
+        else:
+            await interaction.followup.send(f"Incorrect. The correct answer was {correct_answer}.")
+
         
 async def setup(bot: commands.Bot):
     await bot.add_cog(SayedCog(bot))
